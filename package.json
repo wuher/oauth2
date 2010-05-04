@@ -1,0 +1,8 @@
+{
+    "name": "oauth2",
+    "dependencies": ["narwhal"],
+    "jars": [],
+    "author": "Janne Kuuskeri",
+    "description": "OAuth Library",
+    "keywords": ["oauth"]
+}
