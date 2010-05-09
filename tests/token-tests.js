@@ -11,17 +11,16 @@
 
 var assert = require("test/assert");
 var oauth = require("oauth2");
+var util = require("util");
 
 
 exports.testTokenBasic = function () {
-    assert.throwsError(
-        function () {
-            new oauth.Token()
-        }, Error, "should raise error");
-    assert.throwsError(
-        function () {
-            new oauth.Token("my-secret")
-        }, Error, "should raise error");
+    assert.throwsError(function () {
+                           new oauth.Token();
+                       }, Error, "should raise error");
+    assert.throwsError(function () {
+                           new oauth.Token("my-secret");
+                       }, Error, "should raise error");
     var token = new oauth.Token("my-key", "my-secret");
     assert.isSame(token.key, "my-key", "key not set");
     assert.isSame(token.secret, "my-secret", "secret not set");
@@ -95,7 +94,45 @@ exports.testToString = function () {
 
 
 exports.testFromString = function () {
-    
+
+    // fail tests
+
+    [
+        null
+        , undefined
+        , ""
+        , "hiihoo"
+        , "oauth_token"
+        , "oauth_token="
+        , "oauth_token=token&oauth_token_secret"
+        , "oauth_token=token&oauth_token_secret="
+        , "oauth_token=&oauth_token_secret="
+        , "oauth_token=&oauth_token_secret=secret"
+        , "oauth_token=token&oauth_token_secret=secret&oauth_callback_confirmed="
+    ].forEach(
+        function (item) {
+            assert.throwsError(function () {
+                                   oauth.Token.fromString(item);
+                               }, Error);
+        });
+
+    // success tests
+
+    [
+        ["oauth_token=token&oauth_token_secret=secret", "token", "secret"]
+        , ["oauth_callback_confirmed=cbc&oauth_token=token&oauth_token_secret=secret", "token", "secret", "cbc"]
+        , ["hiihoo=heehaw&oauth_token=token&oauth_token_secret=secret", "token", "secret"]
+        , ["oauth_token=token%20secret&oauth_token_secret=secret%3Dpublic", "token secret", "secret=public"]
+    ].forEach(
+        function (item) {
+            var tok = oauth.Token.fromString(item[0]);
+            assert.isSame(tok.key, item[1]);
+            assert.isSame(tok.secret, item[2]);
+
+            if (item.length === 4) {
+                assert.isSame(tok.callback_confirmed, item[3]);
+            }
+        });
 };
 
 
