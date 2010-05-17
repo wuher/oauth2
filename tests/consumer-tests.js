@@ -16,11 +16,11 @@ var oauth = require("oauth2");
 exports.testConsumerBasic = function () {
     assert.throwsError(
         function () {
-            new oauth.Consumer()
+            new oauth.Consumer();
         }, Error, "should raise error");
     assert.throwsError(
         function () {
-            new oauth.Consumer("my-secret")
+            new oauth.Consumer("my-secret");
         }, Error, "should raise error");
     //     assert["throws"](
     //         function () {
