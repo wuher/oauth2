@@ -168,6 +168,30 @@ exports.testToHeader = function () {
 };
 
 
+//
+// toPostData
+//
+exports.testToPostData = function () {
+    var r = new Request();
+
+    r.parameters = {
+        "master": "yoda",
+        "oauth_hdr": "oauth_val"
+    };
+    assert.isSame(
+        "master=yoda&oauth_hdr=oauth_val",
+        r.toPostData()
+    );
+    r.parameters["master"] = "[yoda]?&";
+    assert.isSame(
+        "master=%5Byoda%5D%3F%26&oauth_hdr=oauth_val",
+        r.toPostData()
+    );
+    r.parameters = {};
+    assert.isSame("", r.toPostData());
+};
+
+
 if (require.main == module.id) {
     require("test/runner").run(exports);
 }
