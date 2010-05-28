@@ -13,6 +13,7 @@ var assert = require("test/assert");
 var assert2 = require("assert");
 var Request = require("oauth2").Request;
 var util = require("util");
+var sprintf = require("printf").sprintf;
 
 
 exports.testRequestBasic = function () {
@@ -91,22 +92,23 @@ util.forEachApply(
 //
 util.forEachApply(
     [
-        [{"ba": 1, "ab": 2}, {"ab": 2}, {"ba": 1}]
+        [{"ba": 1, "a": 2}, {"a": 2}, {"ba": 1}]
         , [{"a": 1, "a": 2}, {"a": 2}, {}]
         , [{"b": 2, "b": 1}, {}, {"b": 1}]
         , [{}, {}, {}]
     ],
     function (obj, expected_bykey, expected_byval) {
+        var KEY_FILTER = "a", VAL_FILTER = 1;
         exports["testUtilObjectFilter: " + util.repr(obj)] = function () {
             var copy = util.object.copy(obj);
             var filtered = util.object.filter(
                 obj, function (key, val) {
-                    return (key.indexOf("a") === 0);
+                    return (key === KEY_FILTER);
                 });
             assert.isSame(expected_bykey, filtered);
             filtered = util.object.filter(
                 obj, function (key, val) {
-                    return (val === 1);
+                    return (val === VAL_FILTER);
                 });
             assert.isSame(expected_byval, filtered);
             // make sure that the original didn't change
@@ -136,6 +138,10 @@ util.forEachApply(
 //
 exports.testToHeader = function () {
     var r = new Request();
+    assert.isSame(
+        {"Authorization": 'OAuth realm=""'},
+        r.toHeader()
+    );
     r.parameters = {
         "count": "dooku",
         "darth": "maul",
@@ -190,6 +196,123 @@ exports.testToPostData = function () {
     r.parameters = {};
     assert.isSame("", r.toPostData());
 };
+
+
+//
+// toUrl
+//
+[
+    {
+        url: "http://jedi.net/",
+        params: {},
+        expected: "http://jedi.net/"
+    },
+    {
+        url: "http://jedi.net",
+        params: {'oauth_version': "1.0",
+                 'oauth_timestamp': "137131200"},
+        expected: "http://jedi.net?oauth_version=1.0&oauth_timestamp=137131200"
+    },
+    {
+        url: "http://jedi.net/?oauth_secret=mysecret",
+        params: {'oauth_version': "1.0",
+                 'oauth_timestamp': "137131200"},
+        expected: "http://jedi.net/?oauth_secret=mysecret&oauth_version=1.0&oauth_timestamp=137131200"
+    },
+    {
+        url: "http://jedi.net/hiihoo/..",
+        params: {"foo": "bar"},
+        expected: "http://jedi.net/hiihoo/..?foo=bar"
+    },
+    {
+        url: "http://jedi.net/hiihoo/../net",
+        params: {"foo": "bar"},
+        expected: "http://jedi.net/net?foo=bar"
+    },
+    {
+        url: "",
+        params: {},
+        expected: ""
+    }
+].forEach(function (item) {
+              exports["testToUrl: " + item.expected] = function () {
+                  var r = new Request("GET", item.url, item.params);
+                  assert.isSame(item.expected, r.toUrl());
+              };
+          });
+
+
+//
+// getParameter
+//
+exports.testGetParameter = function () {
+    var r = new Request();
+    assert.isSame(undefined, r.getParameter("jedi"));
+    r.url = "http://jedi.net/luke?lightsaber=green";
+    r.parameters = {"oauth_consumer" : "asdf"};
+    assert.isSame("asdf", r.getParameter("oauth_consumer"));
+    assert.isSame(undefined, r.getParameter("foo"));
+
+    // /// @todo python version does this (but i'm not sure if we need to..
+    // assert.throwsError(
+    //     function () {
+    //         r.getParameter("lightsaber");
+    //     }, Error, "should raise error");
+};
+
+
+util.forEachApply(
+    [
+        [{}, []]
+        , [{"a": 1}, [["a", "1"]]]
+        , [{"a": [1, 3]}, [["a", "1"], ["a", "3"]]]
+        , [{"a": ["mara+jade", "3"]}, [["a", "mara jade"], ["a", "3"]]]
+        , [{"a": ["mara+jade", "3"]}, [["a", "mara jade"], ["a", "3"]], true]
+        , [{"a": ["mara+jade", "3"]}, [["a", "mara+jade"], ["a", "3"]], false]
+        , [{"a": [1, [2, 3]]}, [["a", "1"], ["a", "2,3"]]]
+    ], function (obj, arr, unescape) {
+        exports[sprintf(
+                    "testParamsToFlatArray: %s to %s (%s)",
+                    util.object.repr(obj), arr, unescape)
+               ] = function () {
+                   assert.isSame(arr, Request._qsToFlatArray(obj, unescape));
+               };
+    });
+
+
+util.forEachApply(
+    [
+        // empty
+        ["", {}, ""]
+        // parameters
+        , ["http://jedi.net", {"a": 1}, "a=1"]
+        // parameters and query string
+        , ["http://jedi.net?b=2", {"a": 1}, "a=1&b=2"]
+        // parameters and query string with sorting
+        , ["http://jedi.net?a=1", {"b": 2}, "a=1&b=2"]
+        , ["http://jedi.net?a=1", {"a": [3,2]}, "a=1&a=2&a=3"]
+        , ["http://jedi.net?a=1&a=0", {"a": [3,2]}, "a=0&a=1&a=2&a=3"]
+        , ["http://jedi.net?a=1&a=boba", {"a": ["jango",2]}, "a=1&a=2&a=boba&a=jango"]
+        // escaping
+        , ["http://jedi.net", {"c": "hee haw"}, "c=hee%20haw"]
+        , ["http://jedi.net?b=har%20har", {}, "b=har%20har"]
+        , ["http://jedi.net?b=har har", {"a": 1}, "a=1&b=har%20har"]
+        , ["http://jedi.net?b=har+har", {"a": 1}, "a=1&b=har%20har"]
+        // oauth_signature must be excluded
+        , ["http://jedi.net", {"oauth_signature": 1}, ""]
+        , ["http://jedi.net?a=1", {"oauth_signature": 1}, "a=1"]
+    ], function (url, params, exp) {
+        exports[sprintf(
+                    "testGetNormalizedParameters: %s with %s to %s",
+                    url, util.object.repr(params), exp)
+               ] = function () {
+                   var r = new Request();
+                   r.url = url;
+                   r.parameters = params;
+                   assert.isSame(exp, r.getNormalizedParameters(r));
+               };
+    });
+
 
 
 if (require.main == module.id) {
