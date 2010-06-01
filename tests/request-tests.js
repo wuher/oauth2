@@ -12,8 +12,11 @@
 var assert = require("test/assert");
 var assert2 = require("assert");
 var Request = require("oauth2").Request;
+var Consumer = require("oauth2").Consumer;
+var Token = require("oauth2").Token;
 var util = require("util");
 var sprintf = require("printf").sprintf;
+var mock = require('./mock');
 
 
 exports.testRequestBasic = function () {
@@ -313,6 +316,50 @@ util.forEachApply(
                };
     });
 
+
+
+exports.testSignRequest = function () {
+    var c1, t1, signmethodmock, r;
+
+    // create required objects and mocks
+    c1 = new Consumer("consumer_key", "consumer_secret");
+    t1 = new Token("token_key", "token_secret");
+    signmethodmock = mock.mock({ name : "HSA", sign : function () {} });
+
+    // test without params set in the request
+    r = new Request();
+    signmethodmock.expect.sign().withParameters(r, c1, t1).returns("XYZ");
+    r.signRequest(signmethodmock, c1, t1);
+    assert.isSame("XYZ", r.getParameter("oauth_signature"));
+    assert.isSame("HSA", r.getParameter("oauth_signature_method"));
+    assert.isSame("consumer_key", r.getParameter("oauth_consumer_key"));
+    assert.isSame("token_key", r.getParameter("oauth_token"));
+
+    // oauth_consumer_key set in request's parameters
+    r = new Request();
+    r.parameters["oauth_consumer_key"] = "request_key";
+    signmethodmock.expect.sign().withParameters(r, c1, t1).returns("ZYX");
+    r.signRequest(signmethodmock, c1, t1);
+    assert.isSame("ZYX", r.getParameter("oauth_signature"));
+    assert.isSame("request_key", r.getParameter("oauth_consumer_key"));
+    assert.isSame("token_key", r.getParameter("oauth_token"));
+
+    // oauth_token set in request's parameters
+    r = new Request();
+    r.parameters["oauth_token"] = "request_key";
+    signmethodmock.expect.sign().withParameters(r, c1, t1).returns("ZXY");
+    r.signRequest(signmethodmock, c1, t1);
+    assert.isSame("ZXY", r.getParameter("oauth_signature"));
+    assert.isSame("consumer_key", r.getParameter("oauth_consumer_key"));
+    assert.isSame("request_key", r.getParameter("oauth_token"));
+
+    // verify contract
+    mock.releaseMocks();
+};
+
+
+exports.teardown = function () {
+};
 
 
 if (require.main == module.id) {
