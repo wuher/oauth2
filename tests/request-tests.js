@@ -358,6 +358,23 @@ exports.testSignRequest = function () {
 };
 
 
+exports.testTimestamp = function () {
+    var exp = util.string(new Date().getTime());
+    assert.isSame(exp, Request.makeTimestamp());
+};
+
+
+exports.testMakeNonce = function () {
+    var i, nonce, noncehistory = {};
+    for (i = 0; i < 200; i += 1) {
+        nonce = Request.makeNonce();
+        assert.isFalse(nonce in noncehistory);
+        assert.isSame(8, nonce.length);
+        noncehistory[nonce] = null;
+    }
+};
+
+
 exports.teardown = function () {
 };
 
