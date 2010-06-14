@@ -11,6 +11,8 @@
 
 var assert = require("test/assert");
 var assert2 = require("assert");
+var qs = require("querystring");
+var uri = require("uri");
 var Request = require("oauth2").Request;
 var Consumer = require("oauth2").Consumer;
 var Token = require("oauth2").Token;
@@ -283,6 +285,9 @@ util.forEachApply(
     });
 
 
+//
+// getNormalizedPArameters()
+//
 util.forEachApply(
     [
         // empty
@@ -359,8 +364,11 @@ exports.testSignRequest = function () {
 
 
 exports.testTimestamp = function () {
-    var exp = util.string(new Date().getTime());
-    assert.isSame(exp, Request.makeTimestamp());
+    var res, exp = new Date().getTime();
+    res = Request.makeTimestamp();
+    // allow slight variation
+    assert.isSame(Math.round(exp / 10),
+                  Math.round(Request.makeTimestamp() / 10));
 };
 
 
@@ -372,6 +380,130 @@ exports.testMakeNonce = function () {
         assert.isSame(8, nonce.length);
         noncehistory[nonce] = null;
     }
+};
+
+
+//
+// _splitHeader()
+//
+util.forEachApply(
+    [
+        // empty keys and values
+        ["", {}]
+        , ["h", {"":"h"}, Error]
+        , ["h=", {"h":""}]
+        , ["=h", {"":"h"}]
+        , ["=h,", {"":"h"}]
+        , [",=h,", {"":"h"}]
+        , ["k=,=h,", {k: "", "":"h"}]
+        , ["k=,h,", {k: "", "":"h"}, Error]
+        // normal case
+        , ["k=v,i=h", {k: "v", "i":"h"}]
+        // duplicate key
+        , ["k=v,k=h", {k: "h"}]
+        // space
+        , [" k = v , a = b ", {k: "v", a: "b"}]
+        // quote
+        , ['k="v"', {k: "v"}]
+        , ["k='v'", {"k": "'v'"}]
+    ],
+    function (sz, exp, err) {
+        exports["testSplitHeader: " + sz] = function () {
+            if (err) {
+                assert.throwsError(function () {
+                                       Request._splitHeader(sz);
+                                   }, err);
+            } else {
+                assert.isSame(exp, Request._splitHeader(sz));
+            }
+        };
+    });
+
+
+/**
+ * test fromRequest()
+ */
+exports.testFromRequest2 = function () {
+    var url = "http://jedi.net", req;
+
+    assert.isSame(null, Request.fromRequest("GET", url, {}));
+    req = Request.fromRequest("GET", url, {"Authorization": "OAuth a=b"});
+    assert.isSame({"a": "b"}, req.parameters);
+    req = Request.fromRequest("GET", "http://jedi.net/?c=d", {});
+    assert.isSame({"c": "d"}, req.parameters);
+    req = Request.fromRequest("GET", url, {}, {"e": "f"});
+    assert.isSame({"e": "f"}, req.parameters);
+    req = Request.fromRequest("GET", url, {}, {}, "g=h");
+    assert.isSame({"g": "h"}, req.parameters);
+    req = Request.fromRequest("GET", "http://jedi.net/?c=d",
+                              {"Authorization": "OAuth a=b"},
+                              {"e": "f"},
+                              "g=h");
+    assert.isSame({"a": "b", "c": "d", "e": "f", "g": "h"}, req.parameters);
+    req = Request.fromRequest("GET", "http://jedi.net/?a=1",
+                              {"Authorization": "OAuth a=2"},
+                              {"a": "3"},
+                              "a=4");
+    assert.isSame({"a": "1"}, req.parameters);
+    req = Request.fromRequest("GET", "http://jedi.net/",
+                              {"Authorization": "OAuth a=2"},
+                              {"a": "3"},
+                              "a=4");
+    assert.isSame({"a": "4"}, req.parameters);
+    req = Request.fromRequest("GET", "http://jedi.net/",
+                              {"Authorization": "OAuth a=2"},
+                              {"a": "3"});
+    assert.isSame({"a": "2"}, req.parameters);
+    req = Request.fromRequest("GET", "http://jedi.net/",
+                              {},
+                              {"a": "3"});
+    assert.isSame({"a": "3"}, req.parameters);
+};
+
+
+/**
+ * this test is ported from Python's oauth2
+ */
+exports.testFromRequest = function () {
+    var url = "http://sp.example.com/";
+    var params = {
+        'oauth_version': "1.0",
+        'oauth_nonce': "4572616e48616d6d65724c61686176",
+        'oauth_timestamp': "137131200",
+        'oauth_consumer_key': "0685bd9184jfhq22",
+        'oauth_signature_method': "HMAC-SHA1",
+        'oauth_token': "ad180jjd733klru7",
+        'oauth_signature': "wOJIO9A2W5mFwDgiDvZbTSMK%2FPY%3D"
+    };
+    var req = new Request("GET", url, params);
+    var headers = req.toHeader();
+
+    // test from the headers
+    req = Request.fromRequest("GET", url, headers);
+    assert.isSame(req.method, "GET");
+    assert.isSame(req.url, url);
+    assert.isSame(params, util.object.copy(req.parameters));
+
+    // test with bad OAuth headers
+    var bad_headers = {
+        'Authorization' : 'OAuth this is a bad header'
+    };
+    assert.throwsError(function () {
+                           Request.fromRequest("GET", url, bad_headers);
+                       }, Error);
+
+    // test getting from query string
+    var qsz = qs.stringify(params);
+    req = Request.fromRequest("GET", url, undefined, undefined, qsz);
+    var exp = util.object.copy(params);
+    for (var p in exp) {
+        exp[p] = uri.unescape(exp[p]);
+    }
+    assert.isSame(exp, req.parameters);
+
+    // test that a boned fromRequest() returns null
+    req = Request.fromRequest("GET", url);
+    assert.isSame(null, req);
 };
 
 
