@@ -507,6 +507,30 @@ exports.testFromRequest = function () {
 };
 
 
+exports.testFromConsumerAndToken = function () {
+    var url = "http://sp.example.com/";
+    var tok = new Token("tok-test-key", "tok-test-secret");
+    var con = new Consumer("con-test-key", "con-test-secret");
+    var req = Request.fromConsumerAndToken(
+        con, tok, "GET", url);
+
+    assert.isSame(tok.key, req.parameters["oauth_token"]);
+    assert.isSame(con.key, req.parameters["oauth_consumer_key"]);
+    assert.isSame(undefined, req.parameters["oauth_verifier"]);
+
+    tok.verifier = "hiihoo";
+    req = Request.fromConsumerAndToken(
+        con, tok, "GET", url, {"oauth_token": "dragon",
+                               "oauth_consumer_key" : "shield"});
+    assert.isSame("hiihoo", req.parameters["oauth_verifier"]);
+    assert.isSame(tok.key, req.parameters["oauth_token"]);
+    assert.isSame("shield", req.parameters["oauth_consumer_key"]);
+    assert.isSame(Request.version, req.parameters["oauth_version"]);
+    assert.isSame("string", typeof req.parameters["oauth_nonce"]);
+    assert.isSame("string", typeof req.parameters["oauth_timestamp"]);
+};
+
+
 exports.teardown = function () {
 };
 
