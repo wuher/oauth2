@@ -531,6 +531,29 @@ exports.testFromConsumerAndToken = function () {
 };
 
 
+exports.testFromTokenAndCallback = function () {
+    var url = "http://sp.example.com/";
+
+    var params = {
+        'oauth_version': "1.0",
+        'oauth_nonce': "4572616e48616d6d65724c61686176",
+        'oauth_timestamp': "137131200",
+        'oauth_consumer_key': "0685bd9184jfhq22",
+        'oauth_signature_method': "HMAC-SHA1",
+        'oauth_token': "ad180jjd733klru7",
+        'oauth_signature': "wOJIO9A2W5mFwDgiDvZbTSMK%2FPY%3D"
+    };
+
+    var tok = new Token("tok-test-key", "tok-test-secret");
+    var req = Request.fromTokenAndCallback(tok);
+    assert.isFalse('oauth_callback' in req.parameters);
+    assert.isSame(tok.key, req.parameters['oauth_token']);
+    req = Request.fromTokenAndCallback(tok, url);
+    assert.isTrue('oauth_callback' in req.parameters);
+    assert.isSame(url, req.parameters['oauth_callback']);
+};
+
+
 exports.teardown = function () {
 };
 
