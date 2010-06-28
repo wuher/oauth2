@@ -18,7 +18,7 @@ var Consumer = require("oauth2").Consumer;
 var Token = require("oauth2").Token;
 var util = require("util");
 var sprintf = require("printf").sprintf;
-var mock = require('./mock');
+var mock = require('mok');
 
 
 exports.testRequestBasic = function () {
@@ -329,7 +329,7 @@ exports.testSignRequest = function () {
     // create required objects and mocks
     c1 = new Consumer("consumer_key", "consumer_secret");
     t1 = new Token("token_key", "token_secret");
-    signmethodmock = mock.mock({ name : "HSA", sign : function () {} });
+    signmethodmock = mock.mock({ myname : "HSA", sign : function () {} });
 
     // test without params set in the request
     r = new Request();
