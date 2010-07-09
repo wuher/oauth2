@@ -324,18 +324,31 @@ util.forEachApply(
 
 
 exports.testSignRequest = function () {
-    var c1, t1, signmethodmock, r;
+    var c1, t1, signmethodmock, tokenmock, r;
 
     // create required objects and mocks
     c1 = new Consumer("consumer_key", "consumer_secret");
     t1 = new Token("token_key", "token_secret");
     signmethodmock = mock.mock({ myname : "HSA", sign : function () {} });
+    tokenmock = mock.mock({key : "somekey"});
+
+    // test with null params
+    r = new Request();
+    assert.throwsError(function () {
+                           r.signRequest(signmethodmock, null, null);
+                       }, Error);
+
+    // test with null token
+    signmethodmock.expect.sign().withParameters(r, c1, null).returns("XXX");
+    r.signRequest(signmethodmock, c1, null);
+    assert.isTrue(r.getParameter("oauth_token") === undefined);
+    assert.isSame("consumer_key", r.getParameter("oauth_consumer_key"));
 
     // test without params set in the request
     r = new Request();
-    signmethodmock.expect.sign().withParameters(r, c1, t1).returns("XYZ");
+    signmethodmock.expect.sign().withParameters(r, c1, t1).returns("XZY");
     r.signRequest(signmethodmock, c1, t1);
-    assert.isSame("XYZ", r.getParameter("oauth_signature"));
+    assert.isSame("XZY", r.getParameter("oauth_signature"));
     assert.isSame("HSA", r.getParameter("oauth_signature_method"));
     assert.isSame("consumer_key", r.getParameter("oauth_consumer_key"));
     assert.isSame("token_key", r.getParameter("oauth_token"));
