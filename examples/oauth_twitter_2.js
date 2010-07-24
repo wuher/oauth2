@@ -5,9 +5,7 @@
 // Tampere University of Technology
 //
 // Created: Tue Jul  6 14:46:00 2010 (+0200)
-// Author: jedi
-//
-//
+// Author: wuher
 //
 
 // this can be run once the authorization tokens have been fetched
