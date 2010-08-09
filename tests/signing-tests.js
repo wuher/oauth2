@@ -14,6 +14,20 @@ var o2 = require("oauth2");
 var assert = require("test/assert");
 
 
+exports.testPLAINTEXT = function () {
+    var r, c, t, s, res;
+    r = new o2.Request("GET", "http://jedi.net/");
+    c = new o2.Consumer("con-key", "con-secret");
+    t = new o2.Token("tok-key", "tok-secret");
+    s = new o2.SignatureMethod_PLAINTEXT();
+
+    assert.isTrue(s instanceof o2.SignatureMethod);
+    assert.isSame("PLAINTEXT", s.myname);
+    assert.isSame("con-secret&tok-secret", s.sign(r, c, t));
+    assert.isTrue(s.check(r, c, t, "con-secret&tok-secret"));
+};
+
+
 exports.testSHA = function () {
     var req, con, tok, sig, exp = "KnTWxZ/dZUvOTrvtjw9cXI3yR6U=";
 
@@ -23,9 +37,11 @@ exports.testSHA = function () {
     tok = new o2.Token("jedi", "sith");
 
     sig = new o2.SignatureMethod_HMAC_SHA1();
+    assert.isTrue(sig instanceof o2.SignatureMethod);
     assert.isSame("HMAC-SHA1", sig.myname);
     var res = sig.sign(req, con, tok);
     assert.isSame(exp, res);
+    assert.isTrue(sig.check(req, con, tok, exp));
 };
 
 

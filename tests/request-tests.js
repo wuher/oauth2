@@ -252,17 +252,22 @@ exports.testToPostData = function () {
 //
 exports.testGetParameter = function () {
     var r = new Request();
-    assert.isSame(undefined, r.getParameter("jedi"));
+
+    // not found
+    assert.throwsError(
+        function () {
+            r.getParameter("jedi");
+        }, Error, "should raise error");
+
     r.url = "http://jedi.net/luke?lightsaber=green";
     r.parameters = {"oauth_consumer" : "asdf"};
     assert.isSame("asdf", r.getParameter("oauth_consumer"));
-    assert.isSame(undefined, r.getParameter("foo"));
 
-    // /// @todo python version does this (but i'm not sure if we need to..
-    // assert.throwsError(
-    //     function () {
-    //         r.getParameter("lightsaber");
-    //     }, Error, "should raise error");
+    // not found
+    assert.throwsError(
+        function () {
+            r.getParameter("lightsaber");
+        }, Error, "should raise error");
 };
 
 
@@ -341,7 +346,7 @@ exports.testSignRequest = function () {
     // test with null token
     signmethodmock.expect.sign().withParameters(r, c1, null).returns("XXX");
     r.signRequest(signmethodmock, c1, null);
-    assert.isTrue(r.getParameter("oauth_token") === undefined);
+    assert.throwsError(function () {r.getParameter("oauth_token");});
     assert.isSame("consumer_key", r.getParameter("oauth_consumer_key"));
 
     // test without params set in the request

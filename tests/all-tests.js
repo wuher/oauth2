@@ -13,6 +13,7 @@ exports.testConsumer = require("./consumer-tests");
 exports.testToken = require("./token-tests");
 exports.testReqest = require("./request-tests");
 exports.testSigning = require("./signing-tests");
+exports.testServer = require("./server-tests");
 
 
 if (require.main == module.id) {
