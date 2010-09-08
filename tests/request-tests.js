@@ -382,8 +382,8 @@ exports.testSignRequest = function () {
 
 
 exports.testTimestamp = function () {
-    var res, exp = new Date().getTime();
-    res = Request.makeTimestamp();
+    var res, exp = parseInt((""+new Date().getTime()).substring(0, 10));
+    // res = Request.makeTimestamp();
     // allow slight variation
     assert.isSame(Math.round(exp / 10),
                   Math.round(Request.makeTimestamp() / 10));
