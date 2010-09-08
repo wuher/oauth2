@@ -8,7 +8,7 @@ how to use the library against the Twitter API.
 
 The first one assumes that your Twitter applicaction has configuration
 "Application Type: Client" (set in Twitter's app config page). Then
-set you consumer key and secret in oauth_twitter_1.js and
+set your consumer key and secret in oauth_twitter_1.js and
 oauth_twitter_2.js files. Now you can run it.
 
     cd examples
@@ -18,7 +18,7 @@ Next, copy access token to oauth_twitter_2.js and run:
 
     narwhal oauth_twitter_2.js
 
-The second example uses [Jack][2] and assumes that you Twitter
+The second example uses [Jack][2] and assumes that your Twitter
 application has following configuration:
 
     Application Type: Browser
@@ -32,6 +32,16 @@ to port 8080).
     jackup jack_twitter.js
 
 Then point your browser to http://localhost:8080/ and click the link.
+
+
+License
+=======
+
+Copyright (C) MIT License
+Tampere University of Technology
+
+Author: wuher (jedi@cs.tut.fi)
+
 
 
 [1]:http://github.com/simplegeo/python-oauth2
