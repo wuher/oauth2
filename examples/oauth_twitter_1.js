@@ -32,7 +32,7 @@ var client = new oauth.Client(consumer);
 var resp = client.request(request_token_url, "GET");
 
 if (resp.status != "200") {
-    throw new Exception("Illegal response: " + resp.status);
+    throw new Error("Illegal response: " + resp.status);
 }
 
 var body = [];
