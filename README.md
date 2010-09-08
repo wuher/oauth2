@@ -53,6 +53,8 @@ TODO
 - More documentation to functions.
 - In `Client.request()`, add support for inserting OAuth headers into
   the `Authorization` HTTP header instead of the query string.
+- The port is based on the version of python-oauth2 as it was in
+  2010-03-27. There has been couple of bug fixes since. "Merge" these.
 
 
 [1]:http://github.com/simplegeo/python-oauth2
