@@ -13,6 +13,9 @@
 //
 // run with jackup jack_twitter.js and point your browser 
 // to http://localhost:8080/
+//
+// remember to set your application setting to "web browser" and 
+// "use twitter for authentication" at the twitter app conf page.
 
 
 var qs = require("querystring");

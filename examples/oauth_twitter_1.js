@@ -8,6 +8,10 @@
 // Author: wuher
 //
 
+// remember to set your application setting to "client"
+// at the twitter app conf page.
+
+
 var printf = require("printf").printf;
 var qs = require("querystring");
 var uri = require("uri");
