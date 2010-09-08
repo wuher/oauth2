@@ -22,8 +22,9 @@ var oauth = require("oauth2");
 var sprintf = require("printf").sprintf;
 
 
-var consumer_key = 'yEqC6mSxSSlsLGRk4Kg';
-var consumer_secret = 'KP1NB5vkie3JbCXMmQiTYoeUZVytmZX7LeFaoIrK1B4';
+// replace with your twitter consumer key and secret
+var consumer_key = '';
+var consumer_secret = '';
 var request_token_url = 'http://twitter.com/oauth/request_token';
 var access_token_url = 'http://twitter.com/oauth/access_token';
 var authorize_url = 'http://twitter.com/oauth/authorize';
